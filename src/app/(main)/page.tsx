@@ -6,8 +6,6 @@ import {
   LineChartOutlined,
 } from "@ant-design/icons";
 
-import MainLayout from "@/components/layouts/MainLayout";
-
 export default function Home() {
   const stats = [
     {
@@ -50,27 +48,25 @@ export default function Home() {
   ];
 
   return (
-    <MainLayout>
-      <div className="p-4 pt-16">
-        <h1 className="text-xl font-bold mb-4">Tổng Quan</h1>
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-4">Tổng Quan</h1>
 
-        <Row gutter={[16, 16]}>
-          {stats.map((stat, index) => (
-            <Col key={index} xs={stat.xs} sm={stat.sm} md={stat.md}>
-              <Card bodyStyle={{ padding: "12px" }} className="stat-card">
-                <Statistic
-                  title={stat.title}
-                  value={stat.value}
-                  precision={0}
-                  valueStyle={stat.valueStyle}
-                  prefix={stat.prefix}
-                  suffix={stat.suffix}
-                />
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </div>
-    </MainLayout>
+      <Row gutter={[16, 16]}>
+        {stats.map((stat, index) => (
+          <Col key={index} xs={stat.xs} sm={stat.sm} md={stat.md}>
+            <Card bodyStyle={{ padding: "12px" }} className="stat-card">
+              <Statistic
+                title={stat.title}
+                value={stat.value}
+                precision={0}
+                valueStyle={stat.valueStyle}
+                prefix={stat.prefix}
+                suffix={stat.suffix}
+              />
+            </Card>
+          </Col>
+        ))}
+      </Row>
+    </div>
   );
 }

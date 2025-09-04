@@ -1,0 +1,94 @@
+.page {
+  padding: 16px;
+  max-width: 100%;
+  margin: 0 auto;
+  padding-top: 64px; /* Add padding for header */
+}
+
+@media (min-width: 640px) {
+  .page {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .page {
+    max-width: 768px;
+  }
+}
+
+.card {
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.statusTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.statusTag.new {
+  background-color: #e6f4ff;
+  color: #1677ff;
+}
+
+.statusTag.confirmed {
+  background-color: #f6ffed;
+  color: #52c41a;
+}
+
+.statusTag.delivering {
+  background-color: #fff7e6;
+  color: #fa8c16;
+}
+
+.statusTag.completed {
+  background-color: #f0f0f0;
+  color: #000000;
+}
+
+.paymentTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.paymentTag.unpaid {
+  background-color: #fff2e8;
+  color: #fa541c;
+}
+
+.paymentTag.deposited {
+  background-color: #fff7e6;
+  color: #fa8c16;
+}
+
+.paymentTag.paid {
+  background-color: #f6ffed;
+  color: #52c41a;
+}

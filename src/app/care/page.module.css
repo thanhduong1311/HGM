@@ -1,0 +1,9 @@
+.page {
+  padding: 16px;
+  padding-bottom: 72px;
+}
+
+.card {
+  margin-bottom: 16px;
+  border-radius: 12px;
+}
