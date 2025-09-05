@@ -14,7 +14,7 @@ export default function MainLayout({
   return (
     <Layout className="min-h-screen">
       <AppHeader />
-      <Content className="pt-[56px] pb-[76px]">{children}</Content>
+      <Content style={{ marginTop: 50, marginBottom: 50 }}>{children}</Content>
       <BottomNav />
     </Layout>
   );

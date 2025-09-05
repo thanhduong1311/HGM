@@ -69,8 +69,6 @@ export default function Home() {
     }
   };
 
-  console.log("Stats:", stats?.lastCareActivities);
-
   return (
     <div className="min-h-screen bg-gray-50">
       <AppHeader />
