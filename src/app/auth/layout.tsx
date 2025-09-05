@@ -12,10 +12,10 @@ export default function AuthLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <Layout className="min-h-screen bg-[#3fbccb] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,rgba(0,0,0,0.1)_100%)]">
-      <Content className="flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-md backdrop-blur-sm">
-          <div className="flex flex-col items-center mb-8">
+    <Content>
+      <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-light">
+        <div className="w-100" style={{ maxWidth: "400px" }}>
+          <div className="text-center mb-4 dlex flex-column align-items-center">
             <Image
               src={logo}
               alt="Home Garden Logo"
@@ -25,14 +25,13 @@ export default function AuthLayout({
                 borderRadius: "12px",
                 objectFit: "cover",
               }}
+              className="mb-2"
             />
-            <h1 className="text-2xl font-bold mt-4 text-gray-800">HGM</h1>
+            <h1 className="h3 mb-0 text-center">HGM</h1>
           </div>
-          <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-            {children}
-          </div>
+          <div>{children}</div>
         </div>
-      </Content>
-    </Layout>
+      </div>
+    </Content>
   );
 }
