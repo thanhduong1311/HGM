@@ -21,6 +21,9 @@ import {
 } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import isBetween from "dayjs/plugin/isBetween";
+
+dayjs.extend(isBetween);
 import AppHeader from "@/components/AppHeader";
 import BottomNav from "@/components/BottomNav";
 
@@ -39,6 +42,8 @@ export default function OrderPage() {
   const [customerModalVisible, setCustomerModalVisible] = useState(false);
   const [orderModalVisible, setOrderModalVisible] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+  const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null);
   const [customerForm] = Form.useForm();
   const [orderForm] = Form.useForm();
 
@@ -53,6 +58,7 @@ export default function OrderPage() {
       ]);
       setCustomers(customersData);
       setOrders(ordersData);
+      setFilteredOrders(ordersData);
       setCropTypes(cropTypesData);
     } catch (error) {
       notification.error({
@@ -67,6 +73,23 @@ export default function OrderPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Filter orders based on selected date
+  useEffect(() => {
+    let filtered = [...orders];
+
+    // Filter by date
+    if (selectedDate) {
+      filtered = filtered.filter((order) => {
+        const orderDate = dayjs(order.order_date);
+        return (
+          orderDate.format("YYYY-MM-DD") === selectedDate.format("YYYY-MM-DD")
+        );
+      });
+    }
+
+    setFilteredOrders(filtered);
+  }, [orders, selectedDate]);
 
   // Customer handlers
   const handleCustomerSubmit = async (values: any) => {
@@ -223,11 +246,183 @@ export default function OrderPage() {
   const tabItems = [
     {
       key: "1",
+      label: "Đơn hàng",
+      children: (
+        <div className="space-y-4 mb-5">
+          <Row gutter={16} className="w-100 mb-2">
+            <Col span={12}>
+              <DatePicker
+                className="w-full"
+                format="DD/MM/YYYY"
+                placeholder="Chọn ngày"
+                allowClear
+                value={selectedDate}
+                onChange={(date) => {
+                  setSelectedDate(date);
+                }}
+              />
+            </Col>
+            <Col span={12}>
+              <Button
+                className="w-100"
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setOrderModalVisible(true)}
+              >
+                Tạo đơn hàng
+              </Button>
+            </Col>
+          </Row>
+          <List
+            dataSource={filteredOrders}
+            loading={loading}
+            renderItem={(order: Order) => (
+              <Card className={styles.card}>
+                <Space direction="vertical" className="w-full">
+                  <div className="flex justify-between items-center mb-3">
+                    <div>
+                      <span className="font-semibold text-lg mr-2">
+                        {order.customer?.name}
+                      </span>
+                      {getStatusTag(order.status)}
+                    </div>
+                    <div>{dayjs(order.order_date).format("DD/MM/YYYY")}</div>
+                  </div>
+
+                  <Divider style={{ margin: "0px 0" }} />
+
+                  <div className="grid grid-cols-2 gap-2 mb-1">
+                    <div>
+                      <span className="text-gray-500">Giao hàng:</span>{" "}
+                      {dayjs(order.delivery_date).format("DD/MM/YYYY")}
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Ship:</span>{" "}
+                      {order.shipping_type === "nha_vuon_chiu"
+                        ? "Nhà vườn"
+                        : "Khách hàng"}
+                    </div>
+                  </div>
+
+                  <Divider style={{ margin: "8px 0" }} />
+                  <span>Sản phẩm:</span>
+                  <div className="mb-1">
+                    {order.items?.map((item) => (
+                      <div
+                        key={item.id}
+                        className="d-flex justify-content-between mb-2"
+                      >
+                        <span className="text-gray-700">
+                          {item.crop_type?.name}
+                        </span>
+                        <span className="font-medium">
+                          {item.quantity} {item.unit} x{" "}
+                          {item.price_per_unit.toLocaleString("vi-VN")}đ
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Divider style={{ margin: "8px 0" }} />
+
+                  <div className="space-y-2">
+                    <div className="d-flex justify-content-between items-center text-gray-500">
+                      <span>Tạm tính:</span>
+                      <span>{order.sub_total.toLocaleString("vi-VN")}đ</span>
+                    </div>
+                    {order.shipping_type === "nha_vuon_chiu" &&
+                      order.shipping_fee > 0 && (
+                        <div className="d-flex justify-content-between items-center text-gray-500">
+                          <span>Ship:</span>
+                          <span>
+                            {order.shipping_fee.toLocaleString("vi-VN")}đ
+                          </span>
+                        </div>
+                      )}
+                    <div className="d-flex justify-content-between items-center font-bold text-lg">
+                      <span>Tổng:</span>
+                      <span>{order.total_amount.toLocaleString("vi-VN")}đ</span>
+                    </div>
+                    <div className="d-flex justify-content-between items-center text-gray-500">
+                      <span>Đã cọc:</span>
+                      <span>
+                        {order.deposit_amount.toLocaleString("vi-VN")}đ
+                      </span>
+                    </div>
+                    <div className="d-flex justify-content-between items-center text-gray-500 w-100">
+                      <span>Còn lại:</span>
+                      <span>
+                        {order.remaining_amount.toLocaleString("vi-VN")}đ
+                      </span>
+                    </div>
+                    <div className="d-flex justify-content-between items-center">
+                      <span>Trạng thái thanh toán:</span>
+                      <span>{getPaymentTag(order.payment_status)}</span>
+                    </div>
+                  </div>
+
+                  <Row className="w-100" gutter={[16, 16]}>
+                    <Col span={11}>
+                      {" "}
+                      <Select
+                        value={order.status}
+                        style={{ width: 120 }}
+                        onChange={(value) =>
+                          handleOrderStatusChange(order.id, value)
+                        }
+                      >
+                        <Select.Option value="moi">Mới</Select.Option>
+                        <Select.Option value="xac_nhan">Xác nhận</Select.Option>
+                        <Select.Option value="dang_giao">
+                          Đang giao
+                        </Select.Option>
+                        <Select.Option value="hoan_thanh">
+                          Hoàn thành
+                        </Select.Option>
+                      </Select>
+                    </Col>
+                    <Col span={11}>
+                      <Select
+                        value={order.payment_status}
+                        style={{ width: 120 }}
+                        onChange={(value) =>
+                          handlePaymentStatusChange(order.id, value)
+                        }
+                      >
+                        <Select.Option value="chua_coc">Chưa cọc</Select.Option>
+                        <Select.Option value="da_coc">Đã cọc</Select.Option>
+                        <Select.Option value="da_thanh_toan">
+                          Đã thanh toán
+                        </Select.Option>
+                      </Select>
+                    </Col>
+
+                    <Col span={2}>
+                      <Popconfirm
+                        title="Bạn có chắc muốn xóa đơn hàng này?"
+                        onConfirm={() => handleDeleteOrder(order.id)}
+                        okText="Có"
+                        cancelText="Không"
+                      >
+                        <Button danger icon={<DeleteOutlined />} />
+                      </Popconfirm>
+                    </Col>
+                  </Row>
+                </Space>
+              </Card>
+            )}
+          />
+        </div>
+      ),
+    },
+    {
+      key: "2",
       label: "Khách hàng",
       children: (
-        <div className="space-y-4">
+        <div className="space-y-4 mb-5">
           <div className="flex justify-end mb-4">
             <Button
+              className="w-100"
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => {
@@ -274,134 +469,6 @@ export default function OrderPage() {
                   </Space>
                 </Card>
               </List.Item>
-            )}
-          />
-        </div>
-      ),
-    },
-    {
-      key: "2",
-      label: "Đơn hàng",
-      children: (
-        <div className="space-y-4">
-          <div className="flex justify-end mb-4">
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setOrderModalVisible(true)}
-            >
-              Tạo đơn hàng
-            </Button>
-          </div>
-          <List
-            dataSource={orders}
-            loading={loading}
-            renderItem={(order: Order) => (
-              <Card className={styles.card}>
-                <Space direction="vertical" className="w-full">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="font-semibold mr-2">
-                        {order.customer?.name}
-                      </span>
-                      {getStatusTag(order.status)}
-                    </div>
-                    <div>{dayjs(order.order_date).format("DD/MM/YYYY")}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      Giao hàng:{" "}
-                      {dayjs(order.delivery_date).format("DD/MM/YYYY")}
-                    </div>
-                    <div>
-                      Ship:{" "}
-                      {order.shipping_type === "nha_vuon_chiu"
-                        ? "Nhà vườn"
-                        : "Khách hàng"}
-                    </div>
-                  </div>
-
-                  <div className="border-t pt-2 mt-2">
-                    {order.items?.map((item) => (
-                      <div key={item.id} className="flex justify-between mb-1">
-                        <span>{item.crop_type?.name}</span>
-                        <span>
-                          {item.quantity} {item.unit} x{" "}
-                          {item.price_per_unit.toLocaleString("vi-VN")}đ
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex justify-between border-t pt-2 mt-2">
-                    <div>
-                      <div>
-                        Tạm tính: {order.sub_total.toLocaleString("vi-VN")}đ
-                      </div>
-                      {order.shipping_type === "nha_vuon_chiu" &&
-                        order.shipping_fee > 0 && (
-                          <div>
-                            Ship: {order.shipping_fee.toLocaleString("vi-VN")}đ
-                          </div>
-                        )}
-                      <div className="font-semibold">
-                        Tổng: {order.total_amount.toLocaleString("vi-VN")}đ
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div>
-                        Đã cọc: {order.deposit_amount.toLocaleString("vi-VN")}đ
-                      </div>
-                      <div>
-                        Còn lại:{" "}
-                        {order.remaining_amount.toLocaleString("vi-VN")}đ
-                      </div>
-                      <div>{getPaymentTag(order.payment_status)}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center border-t pt-2 mt-2">
-                    <Select
-                      value={order.status}
-                      style={{ width: 120 }}
-                      onChange={(value) =>
-                        handleOrderStatusChange(order.id, value)
-                      }
-                    >
-                      <Select.Option value="moi">Mới</Select.Option>
-                      <Select.Option value="xac_nhan">Xác nhận</Select.Option>
-                      <Select.Option value="dang_giao">Đang giao</Select.Option>
-                      <Select.Option value="hoan_thanh">
-                        Hoàn thành
-                      </Select.Option>
-                    </Select>
-
-                    <Select
-                      value={order.payment_status}
-                      style={{ width: 120 }}
-                      onChange={(value) =>
-                        handlePaymentStatusChange(order.id, value)
-                      }
-                    >
-                      <Select.Option value="chua_coc">Chưa cọc</Select.Option>
-                      <Select.Option value="da_coc">Đã cọc</Select.Option>
-                      <Select.Option value="da_thanh_toan">
-                        Đã thanh toán
-                      </Select.Option>
-                    </Select>
-
-                    <Popconfirm
-                      title="Bạn có chắc muốn xóa đơn hàng này?"
-                      onConfirm={() => handleDeleteOrder(order.id)}
-                      okText="Có"
-                      cancelText="Không"
-                    >
-                      <Button danger icon={<DeleteOutlined />} />
-                    </Popconfirm>
-                  </div>
-                </Space>
-              </Card>
             )}
           />
         </div>
@@ -462,20 +529,25 @@ export default function OrderPage() {
             </Form.Item>
 
             <Form.Item className="mb-0">
-              <Space className="w-full justify-end">
-                <Button
-                  onClick={() => {
-                    setCustomerModalVisible(false);
-                    setEditingCustomer(null);
-                    customerForm.resetFields();
-                  }}
-                >
-                  Hủy
-                </Button>
-                <Button type="primary" htmlType="submit">
-                  {editingCustomer ? "Cập nhật" : "Thêm mới"}
-                </Button>
-              </Space>
+              <Row className="w-100" gutter={[16, 16]}>
+                <Col span={12}>
+                  <Button
+                    className="w-100"
+                    onClick={() => {
+                      setCustomerModalVisible(false);
+                      setEditingCustomer(null);
+                      customerForm.resetFields();
+                    }}
+                  >
+                    Hủy
+                  </Button>
+                </Col>
+                <Col span={12}>
+                  <Button className="w-100" type="primary" htmlType="submit">
+                    {editingCustomer ? "Cập nhật" : "Thêm mới"}
+                  </Button>
+                </Col>
+              </Row>
             </Form.Item>
           </Form>
         </Modal>
@@ -506,32 +578,44 @@ export default function OrderPage() {
               </Select>
             </Form.Item>
 
-            <div className="grid grid-cols-2 gap-4">
-              <Form.Item
-                name="order_date"
-                label="Ngày đặt"
-                rules={[{ required: true, message: "Vui lòng chọn ngày đặt!" }]}
-                initialValue={dayjs()}
-              >
-                <DatePicker className="w-full" format="DD/MM/YYYY" />
-              </Form.Item>
+            <Row className="w-100" gutter={[16, 16]}>
+              <Col span={12}>
+                <Form.Item
+                  className="w-100"
+                  name="order_date"
+                  label="Ngày đặt"
+                  rules={[
+                    { required: true, message: "Vui lòng chọn ngày đặt!" },
+                  ]}
+                  initialValue={dayjs()}
+                >
+                  <DatePicker className="w-full" format="DD/MM/YYYY" />
+                </Form.Item>
+              </Col>
 
-              <Form.Item
-                name="delivery_date"
-                label="Ngày giao"
-                rules={[
-                  { required: true, message: "Vui lòng chọn ngày giao!" },
-                ]}
-              >
-                <DatePicker className="w-full" format="DD/MM/YYYY" />
-              </Form.Item>
-            </div>
+              <Col span={12}>
+                <Form.Item
+                  className="w-100"
+                  name="delivery_date"
+                  label="Ngày giao"
+                  rules={[
+                    { required: true, message: "Vui lòng chọn ngày giao!" },
+                  ]}
+                >
+                  <DatePicker className="w-full" format="DD/MM/YYYY" />
+                </Form.Item>
+              </Col>
+            </Row>
 
             <Form.List name="items" initialValue={[{}]}>
               {(fields, { add, remove }) => (
-                <div className="space-y-4" style={{ marginBottom: "24px" }}>
+                <div
+                  className="space-y-4 mt-2"
+                  style={{ marginBottom: "24px" }}
+                >
                   {fields.map(({ key, name, ...restField }) => (
                     <div
+                      className="mt-2"
                       key={key}
                       style={{
                         border: "1px solid #d9d9d9",
@@ -541,8 +625,8 @@ export default function OrderPage() {
                         position: "relative",
                       }}
                     >
-                      <Row gutter={[24, 24]} className="mt-2">
-                        <Col span={11}>
+                      <Row gutter={[16, 16]} className="mt-2">
+                        <Col span={14}>
                           <Form.Item
                             {...restField}
                             name={[name, "crop_type_id"]}
@@ -570,7 +654,7 @@ export default function OrderPage() {
                             </Select>
                           </Form.Item>
                         </Col>
-                        <Col span={11}>
+                        <Col span={8}>
                           <Form.Item
                             {...restField}
                             name={[name, "quantity"]}
@@ -588,6 +672,7 @@ export default function OrderPage() {
                         </Col>
                         <Col span={2} style={{ textAlign: "right" }}>
                           <Button
+                            color="red"
                             type="text"
                             danger
                             icon={<DeleteOutlined />}
@@ -595,7 +680,7 @@ export default function OrderPage() {
                             disabled={fields.length === 1}
                           />
                         </Col>
-                        <Col span={11}>
+                        <Col span={8}>
                           <Form.Item
                             {...restField}
                             name={[name, "unit"]}
@@ -607,7 +692,7 @@ export default function OrderPage() {
                             <Input placeholder="VD: kg, bó, cây" />
                           </Form.Item>
                         </Col>
-                        <Col span={11}>
+                        <Col span={14}>
                           <Form.Item
                             {...restField}
                             name={[name, "price_per_unit"]}
@@ -617,13 +702,13 @@ export default function OrderPage() {
                             label="Đơn giá"
                           >
                             <InputNumber
-                              className="w-full"
+                              className="w-100"
                               placeholder="Nhập đơn giá"
                               formatter={(value) =>
                                 `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                               }
                               parser={(value) =>
-                                Number(value?.replace(/[^\d]/g, ""))
+                                value ? Number(value.replace(/[^\d]/g, "")) : 0
                               }
                               min={0}
                               step={1000}
@@ -646,55 +731,64 @@ export default function OrderPage() {
               )}
             </Form.List>
 
-            <div className="grid grid-cols-2 gap-4">
-              <Form.Item
-                name="shipping_type"
-                label="Phí ship"
-                rules={[
-                  { required: true, message: "Vui lòng chọn loại ship!" },
-                ]}
-              >
-                <Select>
-                  <Select.Option value="nha_vuon_chiu">
-                    Nhà vườn chịu
-                  </Select.Option>
-                  <Select.Option value="khach_hang_chiu">
-                    Khách hàng chịu
-                  </Select.Option>
-                </Select>
-              </Form.Item>
+            <Row className="w-100" gutter={[16, 16]}>
+              <Col span={12}>
+                {" "}
+                <Form.Item
+                  name="shipping_type"
+                  label="Phí ship"
+                  rules={[
+                    { required: true, message: "Vui lòng chọn loại ship!" },
+                  ]}
+                >
+                  <Select>
+                    <Select.Option value="nha_vuon_chiu">
+                      Nhà vườn chịu
+                    </Select.Option>
+                    <Select.Option value="khach_hang_chiu">
+                      Khách hàng chịu
+                    </Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
 
-              <Form.Item
-                noStyle
-                shouldUpdate={(prevValues, currentValues) =>
-                  prevValues.shipping_type !== currentValues.shipping_type
-                }
-              >
-                {({ getFieldValue }) =>
-                  getFieldValue("shipping_type") === "nha_vuon_chiu" ? (
-                    <Form.Item name="shipping_fee" label="Phí ship">
-                      <InputNumber
-                        className="w-full"
-                        formatter={(value) =>
-                          `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                        }
-                        parser={(value) => Number(value?.replace(/[^\d]/g, ""))}
-                        step={1000}
-                      />
-                    </Form.Item>
-                  ) : null
-                }
-              </Form.Item>
-            </div>
+              <Col span={12}>
+                <Form.Item
+                  noStyle
+                  shouldUpdate={(prevValues, currentValues) =>
+                    prevValues.shipping_type !== currentValues.shipping_type
+                  }
+                >
+                  {({ getFieldValue }) =>
+                    getFieldValue("shipping_type") === "nha_vuon_chiu" ? (
+                      <Form.Item name="shipping_fee" label="Phí ship">
+                        <InputNumber
+                          className="w-100"
+                          formatter={(value) =>
+                            `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                          }
+                          parser={(value) =>
+                            value ? Number(value.replace(/[^\d]/g, "")) : 0
+                          }
+                          step={1000}
+                        />
+                      </Form.Item>
+                    ) : null
+                  }
+                </Form.Item>
+              </Col>
+            </Row>
 
             <div className="grid grid-cols-2 gap-4">
               <Form.Item name="deposit_amount" label="Tiền cọc">
                 <InputNumber
-                  className="w-full"
+                  className="w-100"
                   formatter={(value) =>
                     `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                   }
-                  parser={(value) => Number(value?.replace(/[^\d]/g, ""))}
+                  parser={(value) =>
+                    value ? Number(value.replace(/[^\d]/g, "")) : 0
+                  }
                   step={1000}
                 />
               </Form.Item>
@@ -724,19 +818,24 @@ export default function OrderPage() {
             </Form.Item>
 
             <Form.Item className="mb-0">
-              <Space className="w-full justify-end">
-                <Button
-                  onClick={() => {
-                    setOrderModalVisible(false);
-                    orderForm.resetFields();
-                  }}
-                >
-                  Hủy
-                </Button>
-                <Button type="primary" htmlType="submit">
-                  Tạo đơn
-                </Button>
-              </Space>
+              <Row className="w-100" gutter={[16, 16]}>
+                <Col span={12}>
+                  <Button
+                    className="w-100"
+                    onClick={() => {
+                      setOrderModalVisible(false);
+                      orderForm.resetFields();
+                    }}
+                  >
+                    Hủy
+                  </Button>
+                </Col>
+                <Col span={12}>
+                  <Button className="w-100" type="primary" htmlType="submit">
+                    Tạo đơn
+                  </Button>
+                </Col>
+              </Row>
             </Form.Item>
           </Form>
         </Modal>

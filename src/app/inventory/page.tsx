@@ -156,6 +156,7 @@ export default function InventoryPage() {
         <div className="space-y-4">
           <div className="flex justify-end">
             <Button
+              className="w-100 mb-2"
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => {
@@ -170,7 +171,7 @@ export default function InventoryPage() {
             dataSource={categories}
             loading={loading}
             renderItem={(category: InventoryCategory) => (
-              <Card className="mb-4">
+              <Card className="mb-2">
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-lg font-medium">{category.name}</h3>
