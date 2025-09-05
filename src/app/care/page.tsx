@@ -95,7 +95,7 @@ export default function CarePage() {
     <div style={{ paddingTop: "72px", paddingBottom: "80px" }}>
       <AppHeader />
       <div className="px-4">
-        <Card bodyStyle={{ padding: "12px" }}>
+        <Card>
           <div className="flex justify-end mb-4">
             <Button
               type="primary"

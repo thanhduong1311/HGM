@@ -298,7 +298,9 @@ export default function HarvestPage() {
     <>
       <AppHeader />
       <div className={styles.page}>
-        <Card bodyStyle={{ padding: "12px" }}>
+        <Card>
+          <h3>Quản lý sản lượng</h3>
+
           <Tabs items={tabItems} />
         </Card>
 

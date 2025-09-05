@@ -261,7 +261,7 @@ export default function LaborPage() {
       <AppHeader />
       <div className={styles.page}>
         <div className="flex-grow overflow-auto">
-          <Card bodyStyle={{ padding: "12px" }}>
+          <Card>
             <Tabs items={tabItems} />
           </Card>
         </div>

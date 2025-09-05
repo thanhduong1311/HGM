@@ -15,6 +15,8 @@ import {
   Select,
   DatePicker,
   notification,
+  Row,
+  Col,
 } from "antd";
 import {
   PlusOutlined,
@@ -33,8 +35,14 @@ import dayjs from "dayjs";
 
 export default function InventoryPage() {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [filteredItems, setFilteredItems] = useState<InventoryItem[]>([]);
   const [categories, setCategories] = useState<InventoryCategory[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<InventoryTransaction[]>([]);
+  const [filteredTransactions, setFilteredTransactions] = useState<
+    InventoryTransaction[]
+  >([]);
+  const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null);
   const [loading, setLoading] = useState(true);
   const [itemModalVisible, setItemModalVisible] = useState(false);
   const [transactionModalVisible, setTransactionModalVisible] = useState(false);
@@ -51,8 +59,10 @@ export default function InventoryPage() {
         inventoryService.listTransactions(),
       ]);
       setInventoryItems(itemsData);
+      setFilteredItems(itemsData);
       setCategories(categoriesData);
       setTransactions(transactionsData);
+      setFilteredTransactions(transactionsData);
     } catch (error) {
       notification.error({
         message: "Lỗi",
@@ -66,6 +76,26 @@ export default function InventoryPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    let filtered = [...inventoryItems];
+    if (selectedCategory) {
+      filtered = filtered.filter(
+        (item) => item.category_id === selectedCategory
+      );
+    }
+    setFilteredItems(filtered);
+  }, [inventoryItems, selectedCategory]);
+
+  useEffect(() => {
+    let filtered = [...transactions];
+    if (selectedDate) {
+      filtered = filtered.filter((transaction) =>
+        dayjs(transaction.date).isSame(selectedDate, "day")
+      );
+    }
+    setFilteredTransactions(filtered);
+  }, [transactions, selectedDate]);
 
   const handleAddEditItem = async (values: any) => {
     try {
@@ -97,14 +127,14 @@ export default function InventoryPage() {
       };
       console.log("Transaction data:", transaction); // Debug log
       await inventoryService.createTransaction(transaction);
-      notification.success({ message: "Thêm giao dịch thành công" });
+      notification.success({ message: "Thêm nhập/xuất thành công" });
       setTransactionModalVisible(false);
       transactionForm.resetFields();
       loadData();
     } catch (error) {
       notification.error({
         message: "Lỗi",
-        description: "Không thể thêm giao dịch",
+        description: "Không thể thêm nhập/xuất",
       });
     }
   };
@@ -130,7 +160,7 @@ export default function InventoryPage() {
 
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [categoryForm] = Form.useForm();
-  const [selectedCategory, setSelectedCategory] =
+  const [editingCategory, setEditingCategory] =
     useState<InventoryCategory | null>(null);
 
   const handleAddEditCategory = async (values: any) => {
@@ -151,33 +181,68 @@ export default function InventoryPage() {
   const tabItems = [
     {
       key: "1",
-      label: "Loại vật tư",
+      label: "Lịch sử nhập/xuất",
       children: (
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <Button
-              className="w-100 mb-2"
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => {
-                setCategoryModalVisible(true);
-              }}
-            >
-              Thêm loại vật tư
-            </Button>
+        <div>
+          <div className="d-flex justify-content-end mb-4">
+            <DatePicker
+              className="w-100"
+              format="DD/MM/YYYY"
+              placeholder="Chọn ngày xem lịch sử"
+              allowClear
+              value={selectedDate}
+              onChange={(date) => setSelectedDate(date)}
+            />
           </div>
-
           <List
-            dataSource={categories}
+            dataSource={filteredTransactions}
             loading={loading}
-            renderItem={(category: InventoryCategory) => (
-              <Card className="mb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-medium">{category.name}</h3>
-                    <p className="text-gray-500">{category.description}</p>
+            renderItem={(transaction) => (
+              <Card
+                className="mb-4"
+                style={{
+                  backgroundColor:
+                    transaction.type === "nhap" ? "#f6ffed" : "#fff7e6",
+                  borderLeft: `4px solid ${
+                    transaction.type === "nhap" ? "#52c41a" : "#faad14"
+                  }`,
+                  transition: "all 0.3s ease",
+                }}
+              >
+                <Space direction="vertical" className="w-100">
+                  <div className="d-flex justify-content-between">
+                    <span className="fw-bold">{transaction.item?.name}</span>
+                    <span>{dayjs(transaction.date).format("DD/MM/YYYY")}</span>
                   </div>
-                </div>
+                  <div className="d-flex justify-content-between">
+                    <span>
+                      Loại:{" "}
+                      <span
+                        style={{
+                          color:
+                            transaction.type === "nhap" ? "#52c41a" : "#faad14",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {transaction.type === "nhap" ? "Nhập kho" : "Xuất kho"}
+                      </span>
+                    </span>
+                    <span>
+                      Số lượng: {transaction.quantity} {transaction.item?.unit}
+                    </span>
+                  </div>
+                  <div className="d-flex justify-content-between">
+                    <span>Đơn giá: {transaction.price.toLocaleString()}đ</span>
+                    <span>
+                      Thành tiền: {transaction.total.toLocaleString()}đ
+                    </span>
+                  </div>
+                  {transaction.note && (
+                    <div className="text-muted mt-2">
+                      Ghi chú: {transaction.note}
+                    </div>
+                  )}
+                </Space>
               </Card>
             )}
           />
@@ -189,23 +254,46 @@ export default function InventoryPage() {
       label: "Danh sách vật tư",
       children: (
         <div className="space-y-4">
-          <div className="flex justify-end">
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => {
-                setSelectedItem(null);
-                itemForm.resetFields();
-                setItemModalVisible(true);
-              }}
+          <Row gutter={[16, 16]} className="mb-4">
+            <Col xs={12} sm={12} md={8} lg={6}>
+              <Select
+                className="w-100"
+                placeholder="Lọc theo loại vật tư"
+                allowClear
+                value={selectedCategory}
+                onChange={(value) => setSelectedCategory(value)}
+              >
+                {categories.map((category) => (
+                  <Select.Option key={category.id} value={category.id}>
+                    {category.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Col>
+            <Col
+              xs={12}
+              sm={12}
+              md={16}
+              lg={18}
+              className="d-flex justify-content-end"
             >
-              Thêm vật tư
-            </Button>
-          </div>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  setSelectedItem(null);
+                  itemForm.resetFields();
+                  setItemModalVisible(true);
+                }}
+              >
+                Thêm vật tư
+              </Button>
+            </Col>
+          </Row>
 
           <List
-            grid={{ gutter: 16, xs: 1, sm: 2, md: 2, lg: 3, xl: 3, xxl: 4 }}
-            dataSource={inventoryItems}
+            grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 4 }}
+            dataSource={filteredItems}
             loading={loading}
             renderItem={(item: InventoryItem) => (
               <List.Item>
@@ -270,44 +358,47 @@ export default function InventoryPage() {
         </div>
       ),
     },
+
     {
       key: "3",
-      label: "Lịch sử giao dịch",
+      label: "Loại vật tư",
       children: (
-        <List
-          dataSource={transactions}
-          loading={loading}
-          renderItem={(transaction) => (
-            <Card className="mb-4">
-              <Space direction="vertical" className="w-full">
-                <div className="flex justify-between">
-                  <span className="font-bold">{transaction.item?.name}</span>
-                  <span>{dayjs(transaction.date).format("DD/MM/YYYY")}</span>
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <Button
+              className="w-100 mb-2"
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setCategoryModalVisible(true);
+              }}
+            >
+              Thêm loại vật tư
+            </Button>
+          </div>
+
+          <List
+            dataSource={categories}
+            loading={loading}
+            renderItem={(category: InventoryCategory) => (
+              <Card className="mb-2">
+                <div className="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h3 className="fs-5 fw-medium">{category.name}</h3>
+                    <p className="text-muted">{category.description}</p>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>
-                    Loại:{" "}
-                    {transaction.type === "nhap" ? "Nhập kho" : "Xuất kho"}
-                  </span>
-                  <span>
-                    Số lượng: {transaction.quantity} {transaction.item?.unit}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Đơn giá: {transaction.price.toLocaleString()}đ</span>
-                  <span>Thành tiền: {transaction.total.toLocaleString()}đ</span>
-                </div>
-                {transaction.note && <div>Ghi chú: {transaction.note}</div>}
-              </Space>
-            </Card>
-          )}
-        />
+              </Card>
+            )}
+          />
+        </div>
       ),
     },
   ];
 
   return (
-    <div className="p-4">
+    <div className="p-0">
+      <h3>Quản lý kho vật tư</h3>
       <Tabs items={tabItems} />
 
       {/* Modal thêm loại vật tư */}
@@ -344,7 +435,7 @@ export default function InventoryPage() {
           </Form.Item>
 
           <Form.Item className="mb-0">
-            <Space className="w-full justify-end">
+            <Space className="w-100 justify-end">
               <Button
                 onClick={() => {
                   setCategoryModalVisible(false);
@@ -404,7 +495,7 @@ export default function InventoryPage() {
           </Form.Item>
 
           <Form.Item className="mb-0">
-            <Space className="w-full justify-end">
+            <Space className="w-100 justify-end">
               <Button
                 onClick={() => {
                   setItemModalVisible(false);
@@ -449,42 +540,48 @@ export default function InventoryPage() {
 
           <Form.Item
             name="date"
-            label="Ngày giao dịch"
+            label="Ngày nhập/xuất"
             rules={[{ required: true, message: "Vui lòng chọn ngày" }]}
           >
-            <DatePicker className="w-full" format="DD/MM/YYYY" />
+            <DatePicker className="w-100" format="DD/MM/YYYY" />
           </Form.Item>
 
-          <Form.Item
-            name="quantity"
-            label="Số lượng"
-            rules={[{ required: true, message: "Vui lòng nhập số lượng" }]}
-          >
-            <InputNumber
-              min={0}
-              className="w-full"
-              placeholder="Nhập số lượng"
-            />
-          </Form.Item>
+          <Row className="w-100" gutter={[16, 16]}>
+            <Col xs={8}>
+              <Form.Item
+                name="quantity"
+                label="Số lượng"
+                rules={[{ required: true, message: "Vui lòng nhập số lượng" }]}
+              >
+                <InputNumber
+                  min={0}
+                  className="w-100"
+                  placeholder="Nhập số lượng"
+                />
+              </Form.Item>
+            </Col>
 
-          <Form.Item
-            name="price"
-            label="Đơn giá"
-            rules={[{ required: true, message: "Vui lòng nhập đơn giá" }]}
-          >
-            <InputNumber
-              min={0}
-              className="w-full"
-              placeholder="Nhập đơn giá"
-            />
-          </Form.Item>
+            <Col xs={16}>
+              <Form.Item
+                name="price"
+                label="Đơn giá"
+                rules={[{ required: true, message: "Vui lòng nhập đơn giá" }]}
+              >
+                <InputNumber
+                  min={0}
+                  className="w-100"
+                  placeholder="Nhập đơn giá"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item name="note" label="Ghi chú">
             <Input.TextArea placeholder="Nhập ghi chú" />
           </Form.Item>
 
           <Form.Item className="mb-0">
-            <Space className="w-full justify-end">
+            <Space className="w-100 justify-end">
               <Button
                 onClick={() => {
                   setTransactionModalVisible(false);

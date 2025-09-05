@@ -480,7 +480,9 @@ export default function OrderPage() {
     <>
       <AppHeader />
       <div className={styles.page}>
-        <Card bodyStyle={{ padding: "12px" }}>
+        <Card>
+          <h3>Quản lý đơn hàng</h3>
+
           <Tabs items={tabItems} />
         </Card>
 
