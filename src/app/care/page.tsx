@@ -12,6 +12,9 @@ import {
   Space,
   DatePicker,
   InputNumber,
+  Row,
+  Col,
+  Popconfirm,
 } from "antd";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -91,12 +94,27 @@ export default function CarePage() {
     }
   };
 
+  const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null);
+
+  const filteredActivities = activities.filter((activity) => {
+    if (!selectedDate) return true;
+    return dayjs(activity.activity_date).isSame(selectedDate, "day");
+  });
+
   return (
     <div style={{ paddingTop: "72px", paddingBottom: "80px" }}>
       <AppHeader />
-      <div className="px-4">
+      <div className="">
         <Card>
-          <div className="flex justify-end mb-4">
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <DatePicker
+              className="w-25"
+              format="DD/MM/YYYY"
+              placeholder="Lọc theo ngày"
+              allowClear
+              value={selectedDate}
+              onChange={(date) => setSelectedDate(date)}
+            />
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -107,41 +125,44 @@ export default function CarePage() {
           </div>
 
           <List
-            dataSource={activities}
+            dataSource={filteredActivities}
             loading={loading}
             renderItem={(activity) => (
               <Card className="mb-4">
-                <Space direction="vertical" className="w-full">
-                  <div className="flex justify-between items-start">
+                <Space direction="vertical" className="w-100">
+                  <div className="d-flex justify-content-between align-items-start">
                     <div>
-                      <h3 className="text-lg font-medium">
+                      <h3 className="fs-5 fw-medium">
                         {activity.activity_type === "bon_phan"
                           ? "Bón phân"
                           : "Xịt thuốc"}
                       </h3>
-                      <p className="text-gray-500">
+                      <p className="text-muted">
                         Vườn: {activity.garden?.name}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-end">
                       <div>
                         {dayjs(activity.activity_date).format("DD/MM/YYYY")}
                       </div>
-                      <Button
-                        type="text"
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={() => handleDelete(activity.id)}
-                      />
+                      <Popconfirm
+                        title="Xác nhận xóa"
+                        description="Bạn có chắc muốn xóa hoạt động chăm sóc này?"
+                        onConfirm={() => handleDelete(activity.id)}
+                        okText="Có"
+                        cancelText="Không"
+                      >
+                        <Button type="text" danger icon={<DeleteOutlined />} />
+                      </Popconfirm>
                     </div>
                   </div>
 
-                  <div className="border-t pt-2 mt-2">
+                  <div className="border-top pt-2 mt-2">
                     {activity.details?.map(
                       (detail: CareActivity["details"][0]) => (
                         <div
                           key={detail.id}
-                          className="flex justify-between mb-1"
+                          className="d-flex justify-content-between mb-1"
                         >
                           <span>{detail.inventory_item?.name}</span>
                           <span>
@@ -153,8 +174,8 @@ export default function CarePage() {
                   </div>
 
                   {activity.note && (
-                    <div className="border-t pt-2 mt-2">
-                      <p className="text-gray-500">{activity.note}</p>
+                    <div className="border-top pt-2 mt-2">
+                      <p className="text-muted">{activity.note}</p>
                     </div>
                   )}
                 </Space>
@@ -175,34 +196,41 @@ export default function CarePage() {
           width={800}
         >
           <Form form={form} layout="vertical" onFinish={handleSubmit}>
-            <div className="grid grid-cols-2 gap-4">
-              <Form.Item
-                name="garden_id"
-                label="Vườn"
-                rules={[{ required: true, message: "Vui lòng chọn vườn!" }]}
-              >
-                <Select placeholder="Chọn vườn">
-                  {gardens.map((garden) => (
-                    <Select.Option key={garden.id} value={garden.id}>
-                      {garden.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  name="garden_id"
+                  label="Vườn"
+                  rules={[{ required: true, message: "Vui lòng chọn vườn!" }]}
+                >
+                  <Select placeholder="Chọn vườn">
+                    {gardens.map((garden) => (
+                      <Select.Option key={garden.id} value={garden.id}>
+                        {garden.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
 
-              <Form.Item
-                name="activity_type"
-                label="Loại hoạt động"
-                rules={[
-                  { required: true, message: "Vui lòng chọn loại hoạt động!" },
-                ]}
-              >
-                <Select placeholder="Chọn loại hoạt động">
-                  <Select.Option value="bon_phan">Bón phân</Select.Option>
-                  <Select.Option value="xit_thuoc">Xịt thuốc</Select.Option>
-                </Select>
-              </Form.Item>
-            </div>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  name="activity_type"
+                  label="Loại hoạt động"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng chọn loại hoạt động!",
+                    },
+                  ]}
+                >
+                  <Select placeholder="Chọn loại hoạt động">
+                    <Select.Option value="bon_phan">Bón phân</Select.Option>
+                    <Select.Option value="xit_thuoc">Xịt thuốc</Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
 
             <Form.Item
               name="activity_date"
@@ -221,7 +249,7 @@ export default function CarePage() {
                     <Card
                       key={key}
                       size="small"
-                      className="bg-gray-50"
+                      className="bg-gray-50 mb-2"
                       extra={
                         fields.length > 1 && (
                           <DeleteOutlined
@@ -294,19 +322,24 @@ export default function CarePage() {
             </Form.Item>
 
             <Form.Item className="mb-0">
-              <Space className="w-full justify-end">
-                <Button
-                  onClick={() => {
-                    setModalVisible(false);
-                    form.resetFields();
-                  }}
-                >
-                  Hủy
-                </Button>
-                <Button type="primary" htmlType="submit">
-                  Thêm mới
-                </Button>
-              </Space>
+              <Row className="w-100" gutter={[16, 16]}>
+                <Col span={12}>
+                  <Button
+                    className="w-100"
+                    onClick={() => {
+                      setModalVisible(false);
+                      form.resetFields();
+                    }}
+                  >
+                    Hủy
+                  </Button>
+                </Col>
+                <Col span={12}>
+                  <Button className="w-100" type="primary" htmlType="submit">
+                    Thêm mới
+                  </Button>
+                </Col>
+              </Row>
             </Form.Item>
           </Form>
         </Modal>

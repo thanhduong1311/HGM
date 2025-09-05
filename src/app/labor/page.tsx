@@ -142,14 +142,84 @@ export default function LaborPage() {
   // No need for table columns as we're using List and Card components
 
   // Tab items
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>("all");
+
+  const filteredLaborRecords = laborRecords.filter((record) => {
+    if (paymentStatusFilter === "all") return true;
+    return record.payment_status === paymentStatusFilter;
+  });
+
   const tabItems = [
     {
       key: "1",
+      label: "Bảng công",
+      children: (
+        <div className="mb-5">
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <Select
+              value={paymentStatusFilter}
+              onChange={setPaymentStatusFilter}
+              style={{ width: 200 }}
+              options={[
+                { value: "all", label: "Tất cả" },
+                { value: "chua_thanh_toan", label: "Chưa trả công" },
+                { value: "da_thanh_toan", label: "Đã trả công" },
+              ]}
+            />
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setRecordModalVisible(true)}
+            >
+              Thêm bảng công
+            </Button>
+          </div>
+          <List
+            dataSource={filteredLaborRecords}
+            loading={loading}
+            renderItem={(record: LaborRecord) => (
+              <Card className="mb-4">
+                <Space direction="vertical" className="w-100">
+                  <div className="d-flex justify-content-between">
+                    <span className="fw-semibold">{record.worker?.name}</span>
+                    <span>{dayjs(record.work_date).format("DD/MM/YYYY")}</span>
+                  </div>
+                  <div className="d-flex justify-content-between">
+                    <span>Số giờ: {record.hours_worked}</span>
+                    <span>
+                      Thành tiền: {record.total_amount.toLocaleString("vi-VN")}đ
+                    </span>
+                  </div>
+                  <div className="d-flex align-items-center justify-content-between">
+                    <span>Trạng thái:</span>
+                    <Select
+                      value={record.payment_status}
+                      style={{ width: 140 }}
+                      onChange={(value: "chua_thanh_toan" | "da_thanh_toan") =>
+                        handlePaymentStatusChange(record.id, value)
+                      }
+                      options={[
+                        { value: "chua_thanh_toan", label: "Chưa Trả Công" },
+                        { value: "da_thanh_toan", label: "Đã Trả Công" },
+                      ]}
+                    />
+                  </div>
+                  {record.note && <div>Ghi chú: {record.note}</div>}
+                </Space>
+              </Card>
+            )}
+          />
+        </div>
+      ),
+    },
+    {
+      key: "2",
       label: "Danh sách người làm",
       children: (
-        <div className="space-y-4">
+        <div className="space-y-4 mb-5">
           <div className="flex justify-end mb-4">
             <Button
+              className="w-100"
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => {
@@ -166,7 +236,7 @@ export default function LaborPage() {
             dataSource={workers}
             loading={loading}
             renderItem={(worker: Worker) => (
-              <List.Item>
+              <List.Item className="mb-3">
                 <Card
                   actions={[
                     <Button
@@ -188,8 +258,8 @@ export default function LaborPage() {
                     </Popconfirm>,
                   ]}
                 >
-                  <Space direction="vertical" className="w-full">
-                    <div className="font-semibold">{worker.name}</div>
+                  <Space direction="vertical" className="w-100">
+                    <div className="fw-semibold">{worker.name}</div>
                     {worker.phone && <div>SĐT: {worker.phone}</div>}
                     <div>
                       Giá/giờ: {worker.hourly_rate.toLocaleString("vi-VN")}đ
@@ -197,58 +267,6 @@ export default function LaborPage() {
                   </Space>
                 </Card>
               </List.Item>
-            )}
-          />
-        </div>
-      ),
-    },
-    {
-      key: "2",
-      label: "Bảng công",
-      children: (
-        <div className="space-y-4">
-          <div className="flex justify-end mb-4">
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setRecordModalVisible(true)}
-            >
-              Thêm bảng công
-            </Button>
-          </div>
-          <List
-            dataSource={laborRecords}
-            loading={loading}
-            renderItem={(record: LaborRecord) => (
-              <Card className="mb-4">
-                <Space direction="vertical" className="w-full">
-                  <div className="flex justify-between">
-                    <span className="font-semibold">{record.worker?.name}</span>
-                    <span>{dayjs(record.work_date).format("DD/MM/YYYY")}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Số giờ: {record.hours_worked}</span>
-                    <span>
-                      Thành tiền: {record.total_amount.toLocaleString("vi-VN")}đ
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Trạng thái:</span>
-                    <Select
-                      value={record.payment_status}
-                      style={{ width: 140 }}
-                      onChange={(value: "chua_thanh_toan" | "da_thanh_toan") =>
-                        handlePaymentStatusChange(record.id, value)
-                      }
-                      options={[
-                        { value: "chua_thanh_toan", label: "Chưa Trả Công" },
-                        { value: "da_thanh_toan", label: "Đã Trả Công" },
-                      ]}
-                    />
-                  </div>
-                  {record.note && <div>Ghi chú: {record.note}</div>}
-                </Space>
-              </Card>
             )}
           />
         </div>
@@ -302,7 +320,7 @@ export default function LaborPage() {
               ]}
             >
               <InputNumber
-                className="w-full"
+                className="w-100"
                 formatter={(value) =>
                   `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                 }
@@ -312,20 +330,25 @@ export default function LaborPage() {
             </Form.Item>
 
             <Form.Item className="mb-0">
-              <Space className="w-full justify-end">
-                <Button
-                  onClick={() => {
-                    setWorkerModalVisible(false);
-                    setEditingWorker(null);
-                    workerForm.resetFields();
-                  }}
-                >
-                  Hủy
-                </Button>
-                <Button type="primary" htmlType="submit">
-                  {editingWorker ? "Cập nhật" : "Thêm mới"}
-                </Button>
-              </Space>
+              <Row className="w-100" gutter={[16, 16]}>
+                <Col span={12}>
+                  <Button
+                    className="w-100"
+                    onClick={() => {
+                      setWorkerModalVisible(false);
+                      setEditingWorker(null);
+                      workerForm.resetFields();
+                    }}
+                  >
+                    Hủy
+                  </Button>
+                </Col>
+                <Col span={12}>
+                  <Button className="w-100" type="primary" htmlType="submit">
+                    {editingWorker ? "Cập nhật" : "Thêm mới"}
+                  </Button>
+                </Col>
+              </Row>
             </Form.Item>
           </Form>
         </Modal>
@@ -363,33 +386,38 @@ export default function LaborPage() {
               label="Ngày làm"
               rules={[{ required: true, message: "Vui lòng chọn ngày làm!" }]}
             >
-              <DatePicker className="w-full" format="DD/MM/YYYY" />
+              <DatePicker className="w-100" format="DD/MM/YYYY" />
             </Form.Item>
             <Form.Item
               name="hours_worked"
               label="Số giờ làm"
               rules={[{ required: true, message: "Vui lòng nhập số giờ làm!" }]}
             >
-              <InputNumber className="w-full" min={0} step={0.5} />
+              <InputNumber className="w-100" min={0} step={0.5} />
             </Form.Item>
             <Form.Item name="note" label="Ghi chú">
               <Input.TextArea />
             </Form.Item>
 
             <Form.Item className="mb-0">
-              <Space className="w-full justify-end">
-                <Button
-                  onClick={() => {
-                    setRecordModalVisible(false);
-                    recordForm.resetFields();
-                  }}
-                >
-                  Hủy
-                </Button>
-                <Button type="primary" htmlType="submit">
-                  Thêm mới
-                </Button>
-              </Space>
+              <Row className="w-100" gutter={[16, 16]}>
+                <Col span={12}>
+                  <Button
+                    className="w-100"
+                    onClick={() => {
+                      setRecordModalVisible(false);
+                      recordForm.resetFields();
+                    }}
+                  >
+                    Hủy
+                  </Button>
+                </Col>
+                <Col span={12}>
+                  <Button className="w-100" type="primary" htmlType="submit">
+                    Thêm mới
+                  </Button>
+                </Col>
+              </Row>
             </Form.Item>
           </Form>
         </Modal>
