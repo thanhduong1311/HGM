@@ -14,7 +14,7 @@ const BottomNav = () => {
 
   const menuItems = [
     {
-      key: "/statistics",
+      key: "/",
       icon: <BarChartOutlined />,
       label: "Thống Kê",
     },

@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "antd";
 import dynamic from "next/dynamic";
 
 const AppHeader = dynamic(() => import("@/components/AppHeader"), {
@@ -18,7 +19,7 @@ export default function ClientLayout({
   return (
     <div className="min-h-screen flex flex-col">
       <AppHeader />
-      <main className="flex-1 mt-16 mb-16 p-4">{children}</main>
+      <Card>{children}</Card>
       <BottomNav />
     </div>
   );

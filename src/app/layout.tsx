@@ -1,9 +1,9 @@
 "use client";
 
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./globals.css";
 import { Inter } from "next/font/google";
 import { AuthProvider } from "@/contexts/AuthContext";
-import "./globals.css";
-import "bootstrap/dist/css/bootstrap.min.css";
 import { useEffect } from "react";
 
 const inter = Inter({
@@ -16,9 +16,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  useEffect(() => {
+    require("bootstrap/dist/js/bootstrap.bundle.min.js");
+  }, []);
+
   return (
     <html lang="vi">
-      <body className={`${inter.variable} antialiased`}>
+      <body className={`${inter.variable} bg-light`}>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
