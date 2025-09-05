@@ -8,6 +8,7 @@ import {
   TeamOutlined,
   BarChartOutlined,
   CodeSandboxOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 
 const BottomNav = () => {
@@ -42,8 +43,8 @@ const BottomNav = () => {
     },
     {
       key: "/care",
-      icon: <TeamOutlined />,
-      label: "Chăm Sóc",
+      icon: <FileTextOutlined />,
+      label: "Nhật Ký",
     },
   ];
 

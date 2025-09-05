@@ -280,6 +280,7 @@ export default function LaborPage() {
       <div className={styles.page}>
         <div className="flex-grow overflow-auto">
           <Card>
+            <h3>Quản lý nhân công</h3>
             <Tabs items={tabItems} />
           </Card>
         </div>

@@ -106,7 +106,9 @@ export default function CarePage() {
       <AppHeader />
       <div className="">
         <Card>
-          <div className="d-flex justify-content-between align-items-center mb-4">
+          <h3>Nhật ký chăm sóc vườn</h3>
+
+          <div className="d-flex justify-content-between align-items-center mb-4 mt-2">
             <DatePicker
               className="w-25"
               format="DD/MM/YYYY"

@@ -2,6 +2,16 @@ import { supabase } from "@/lib/supabase";
 import { handleSupabaseError } from "@/lib/error";
 import dayjs from "dayjs";
 
+interface DailyStats {
+  date: string;
+  revenue: number;
+  shipping_expenses: number;
+  inventory_expenses: number;
+  labor_expenses: number;
+  labor_hours: number;
+  profit: number;
+}
+
 interface StatisticsSummary {
   revenue: number;
   expenses: number;
@@ -27,53 +37,38 @@ export const statisticsService = {
     endDate: string
   ): Promise<StatisticsSummary> {
     try {
-      // Get orders summary
-      const { data: orderStats, error: orderError } = await supabase
-        .from("orders")
-        .select("total_amount")
-        .gte("order_date", startDate)
-        .lte("order_date", endDate);
-
-      if (orderError) throw handleSupabaseError(orderError);
-
-      const revenue = orderStats.reduce(
-        (sum, order) => sum + (order.total_amount || 0),
-        0
-      );
-      const orderCount = orderStats.length;
-
-      // Get expenses (inventory transactions + labor)
-      const { data: inventoryExpenses, error: inventoryError } = await supabase
-        .from("inventory_transactions")
-        .select("total")
-        .eq("type", "nhap")
+      // Get summary from statistics view
+      const { data: statsData, error: statsError } = await supabase
+        .from("statistics_view")
+        .select("*")
         .gte("date", startDate)
         .lte("date", endDate);
 
-      if (inventoryError) throw handleSupabaseError(inventoryError);
+      if (statsError) throw handleSupabaseError(statsError);
 
-      const { data: laborExpenses, error: laborError } = await supabase
-        .from("labor_records")
-        .select("total_amount, hours_worked")
-        .gte("work_date", startDate)
-        .lte("work_date", endDate);
-
-      if (laborError) throw handleSupabaseError(laborError);
-
-      const totalInventoryExpenses = inventoryExpenses.reduce(
-        (sum, tx) => sum + (tx.total || 0),
-        0
-      );
-      const totalLaborExpenses = laborExpenses.reduce(
-        (sum, record) => sum + (record.total_amount || 0),
-        0
-      );
-      const totalLaborHours = laborExpenses.reduce(
-        (sum, record) => sum + (record.hours_worked || 0),
-        0
+      // Calculate totals from the view data
+      const totals = (statsData as DailyStats[]).reduce(
+        (acc, day) => ({
+          revenue: acc.revenue + day.revenue,
+          expenses:
+            acc.expenses +
+            day.shipping_expenses +
+            day.inventory_expenses +
+            day.labor_expenses,
+          laborHours: acc.laborHours + day.labor_hours,
+        }),
+        { revenue: 0, expenses: 0, laborHours: 0 }
       );
 
-      const expenses = totalInventoryExpenses + totalLaborExpenses;
+      // Get order count for the period
+      const { count: orderCount, error: orderCountError } = await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "hoan_thanh")
+        .gte("order_date", startDate)
+        .lte("order_date", endDate);
+
+      if (orderCountError) throw handleSupabaseError(orderCountError);
 
       // Get garden and bed count, customers, workers, and crop types
       const [
@@ -109,7 +104,7 @@ export const statisticsService = {
           id,
           activity_type,
           activity_date,
-          gardens!inner (
+          garden:gardens (
             name
           )
         `
@@ -123,17 +118,17 @@ export const statisticsService = {
         id: activity.id,
         activity_type: activity.activity_type,
         activity_date: activity.activity_date,
-        garden_name: activity.gardens[0]?.name || "",
+        garden_name: activity.garden[0]?.name || "",
       }));
 
       return {
-        revenue,
-        expenses,
-        profit: revenue - expenses,
-        orderCount,
+        revenue: totals.revenue,
+        expenses: totals.expenses,
+        profit: totals.revenue - totals.expenses,
+        orderCount: orderCount || 0,
         gardenCount,
         bedCount,
-        laborHours: totalLaborHours,
+        laborHours: totals.laborHours,
         customerCount: customerCount || 0,
         workerCount: workerCount || 0,
         cropTypeCount: cropTypeCount || 0,
