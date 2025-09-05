@@ -1,13 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 :root {
   --background: #ffffff;
   --foreground: #171717;
   --header-height: 56px;
   --bottom-nav-height: 64px;
-  --font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-family: sans-serif, -apple-system, "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
   --color-primary: #3fbccbbd;
   --color-primary-light: #5ec8d5;
   --color-primary-dark: #2e8c98;

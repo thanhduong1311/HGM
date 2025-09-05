@@ -12,6 +12,8 @@ import {
   Popconfirm,
   Space,
   notification,
+  Row,
+  Col,
 } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { Garden, gardenService } from "@/services/garden.service";
@@ -98,10 +100,15 @@ export default function GardenPage() {
   };
 
   return (
-    <div className="p-4">
+    <Card>
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-xl font-bold">Quản lý vườn</h1>
-        <Button type="primary" icon={<PlusOutlined />} onClick={showAddModal}>
+        <Button
+          className="w-100 mt-2"
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={showAddModal}
+        >
           Thêm vườn
         </Button>
       </div>
@@ -170,48 +177,61 @@ export default function GardenPage() {
             <Input placeholder="Nhập vị trí vườn" />
           </Form.Item>
 
-          <Form.Item
-            name="area"
-            label="Diện tích (m²)"
-            rules={[{ required: true, message: "Vui lòng nhập diện tích" }]}
-          >
-            <InputNumber
-              min={0}
-              className="w-full"
-              placeholder="Nhập diện tích vườn"
-            />
-          </Form.Item>
+          <Row className="w-100" gutter={[16, 16]}>
+            <Col span={12}>
+              <Form.Item
+                className="w-100"
+                name="area"
+                label="Diện tích (m²)"
+                rules={[{ required: true, message: "Vui lòng nhập diện tích" }]}
+              >
+                <InputNumber
+                  min={0}
+                  className="w-100"
+                  placeholder="Nhập diện tích vườn"
+                />
+              </Form.Item>
+            </Col>
 
-          <Form.Item
-            name="number_of_beds"
-            label="Số luống"
-            rules={[{ required: true, message: "Vui lòng nhập số luống" }]}
-          >
-            <InputNumber
-              min={0}
-              className="w-full"
-              placeholder="Nhập số luống"
-            />
-          </Form.Item>
+            <Col span={12}>
+              <Form.Item
+                className="w-100"
+                name="number_of_beds"
+                label="Số luống"
+                rules={[{ required: true, message: "Vui lòng nhập số luống" }]}
+              >
+                <InputNumber
+                  min={0}
+                  className="w-100"
+                  placeholder="Nhập số luống"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item className="mb-0">
-            <Space className="w-full justify-end">
-              <Button
-                onClick={() => {
-                  setIsModalVisible(false);
-                  setEditingGarden(null);
-                  form.resetFields();
-                }}
-              >
-                Hủy
-              </Button>
-              <Button type="primary" htmlType="submit">
-                {editingGarden ? "Cập nhật" : "Thêm mới"}
-              </Button>
-            </Space>
+            <Row className="w-100" gutter={16}>
+              <Col span={12}>
+                <Button
+                  className="w-100"
+                  onClick={() => {
+                    setIsModalVisible(false);
+                    setEditingGarden(null);
+                    form.resetFields();
+                  }}
+                >
+                  Hủy
+                </Button>
+              </Col>
+              <Col span={12}>
+                <Button className="w-100" type="primary" htmlType="submit">
+                  {editingGarden ? "Cập nhật" : "Thêm mới"}
+                </Button>
+              </Col>
+            </Row>
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+    </Card>
   );
 }

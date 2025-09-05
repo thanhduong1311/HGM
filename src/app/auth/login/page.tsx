@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { Form, Input, Button, Alert, Typography } from "antd";
+import { Form, Input, Button, Alert, Typography, Card } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 
 const { Text } = Typography;
@@ -36,15 +36,15 @@ export default function LoginPage() {
   };
 
   return (
-    <>
-      <h1 className="text-2xl font-bold text-center mb-8">Đăng nhập</h1>
+    <Card className="shadow-sm">
+      <h2 className="text-center mb-4">Đăng nhập</h2>
       {error && (
         <Alert
           message="Lỗi đăng nhập"
           description={error}
           type="error"
           showIcon
-          className="mb-6"
+          className="mb-3"
         />
       )}
       <Form
@@ -89,29 +89,30 @@ export default function LoginPage() {
           />
         </Form.Item>
 
-        <Form.Item>
+        <Form.Item className="mb-3 w-100">
           <Button
             type="primary"
             htmlType="submit"
             loading={loading}
-            className="w-full bg-green-600 hover:bg-green-700"
+            className="w-100"
+            // style={{ backgroundColor: "#198754", borderColor: "#198754" }}
           >
             Đăng nhập
           </Button>
         </Form.Item>
       </Form>
 
-      <div className="text-center">
-        <Text className="text-gray-600">
+      <div className="text-center mt-3">
+        <Text>
           Chưa có tài khoản?{" "}
           <Link
             href="/auth/register"
-            className="text-green-600 hover:underline"
+            className="text-success text-decoration-none"
           >
             Đăng ký
           </Link>
         </Text>
       </div>
-    </>
+    </Card>
   );
 }

@@ -1,27 +1,30 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   HomeOutlined,
   InboxOutlined,
   ShoppingCartOutlined,
   TeamOutlined,
   BarChartOutlined,
+  CodeSandboxOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 
 const BottomNav = () => {
   const router = useRouter();
+  const pathname = usePathname();
 
   const menuItems = [
     {
-      key: "/statistics",
+      key: "/",
       icon: <BarChartOutlined />,
       label: "Thống Kê",
     },
     {
-      key: "/inventory",
+      key: "/orders",
       icon: <ShoppingCartOutlined />,
-      label: "Vật Tư",
+      label: "Đơn Hàng",
     },
     {
       key: "/harvest",
@@ -29,9 +32,9 @@ const BottomNav = () => {
       label: "Thu Hoạch",
     },
     {
-      key: "/orders",
-      icon: <ShoppingCartOutlined />,
-      label: "Đơn Hàng",
+      key: "/inventory",
+      icon: <CodeSandboxOutlined />,
+      label: "Vật Tư",
     },
     {
       key: "/labor",
@@ -40,8 +43,8 @@ const BottomNav = () => {
     },
     {
       key: "/care",
-      icon: <TeamOutlined />,
-      label: "Chăm Sóc",
+      icon: <FileTextOutlined />,
+      label: "Nhật Ký",
     },
   ];
 
@@ -80,7 +83,7 @@ const BottomNav = () => {
               background: "none",
               border: "none",
               cursor: "pointer",
-              color: "#666",
+              color: pathname === item.key ? "#1890ff" : "#666",
               padding: "8px 0",
               fontSize: "12px",
             }}

@@ -1,12 +1,14 @@
 "use client";
 
-import { Geist } from "next/font/google";
-import { AuthProvider } from "@/contexts/AuthContext";
+import "bootstrap/dist/css/bootstrap.min.css";
 import "./globals.css";
+import { Inter } from "next/font/google";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
-const geist = Geist({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-geist",
+  variable: "--font-inter",
 });
 
 export default function RootLayout({
@@ -14,9 +16,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  useEffect(() => {
+    require("bootstrap/dist/js/bootstrap.bundle.min.js");
+  }, []);
+
   return (
     <html lang="vi">
-      <body className={`${geist.variable} antialiased`}>
+      <body className={`${inter.variable} bg-light`}>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

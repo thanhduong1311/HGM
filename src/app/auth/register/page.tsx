@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { Form, Input, Button, Alert, Typography } from "antd";
+import { Form, Input, Button, Alert, Typography, Card } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 
 const { Text } = Typography;
@@ -52,7 +52,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <>
+    <Card>
       <h1 className="text-2xl font-bold text-center mb-8">Đăng ký</h1>
       {error && (
         <Alert
@@ -149,10 +149,10 @@ export default function RegisterPage() {
 
         <Form.Item>
           <Button
+            className="w-100"
             type="primary"
             htmlType="submit"
             loading={loading}
-            className="w-full bg-green-600 hover:bg-green-700"
           >
             Đăng ký
           </Button>
@@ -167,6 +167,6 @@ export default function RegisterPage() {
           </Link>
         </Text>
       </div>
-    </>
+    </Card>
   );
 }
